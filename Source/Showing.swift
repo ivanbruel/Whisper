@@ -5,7 +5,15 @@ public func show(whisper message: Message, to: UINavigationController, action: W
 }
 
 public func show(shout announcement: Announcement, to: UIViewController, completion: (() -> Void)? = nil) {
-  shoutView.craft(announcement, to: to, completion: completion)
+    if shoutView == nil {
+        shoutView = ShoutView()
+    }
+    shoutView?.craft(announcement, to: to, completion: completion)
+}
+
+public func hideShout() {
+    shoutView?.silent()
+    shoutView = nil
 }
 
 public func show(whistle murmur: Murmur, action: WhistleAction = .show(1.5)) {

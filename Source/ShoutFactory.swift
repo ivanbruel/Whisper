@@ -1,6 +1,6 @@
 import UIKit
 
-let shoutView = ShoutView()
+var shoutView: ShoutView?
 
 open class ShoutView: UIView {
 
@@ -73,7 +73,7 @@ open class ShoutView: UIView {
     }()
 
   open fileprivate(set) var announcement: Announcement?
-  open fileprivate(set) var displayTimer = Timer()
+  open fileprivate(set) weak var displayTimer: Timer?
   open fileprivate(set) var panGestureActive = false
   open fileprivate(set) var shouldSilent = false
   open fileprivate(set) var completion: (() -> ())?
@@ -110,6 +110,7 @@ open class ShoutView: UIView {
   }
 
   deinit {
+    self.displayTimer?.invalidate()
     NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
   }
 
@@ -130,7 +131,7 @@ open class ShoutView: UIView {
     titleLabel.text = announcement.title
     subtitleLabel.text = announcement.subtitle
 
-    displayTimer.invalidate()
+    displayTimer?.invalidate()
     displayTimer = Timer.scheduledTimer(timeInterval: announcement.duration,
       target: self, selector: #selector(ShoutView.displayTimerDidFire), userInfo: nil, repeats: false)
 
@@ -175,15 +176,14 @@ open class ShoutView: UIView {
       titleLabel.center.y = imageView.center.y - 2.5
     }
 
-    frame = CGRect(x: 0, y: safeYCoordinate,
-                   width: totalWidth, height: internalHeight + Dimensions.touchOffset)
+    frame = CGRect(x: 0, y: 0, width: totalWidth, height: internalHeight + Dimensions.touchOffset)
   }
 
   // MARK: - Frame
 
   open override var frame: CGRect {
     didSet {
-      backgroundView.frame = CGRect(x: 0, y: safeYCoordinate,
+      backgroundView.frame = CGRect(x: 0, y: 0,
                                     width: frame.size.width,
                                     height: frame.size.height - Dimensions.touchOffset)
 
@@ -201,14 +201,18 @@ open class ShoutView: UIView {
       self.frame.size.height = 0
       }, completion: { finished in
         self.completion?()
-        self.displayTimer.invalidate()
+        self.displayTimer?.invalidate()
+        self.announcement?.action = nil
+        self.announcement = nil
+        self.completion = nil
+        self.panGestureActive = false
         self.removeFromSuperview()
     })
   }
 
   // MARK: - Timer methods
 
-    @objc open func displayTimerDidFire() {
+  @objc open func displayTimerDidFire() {
     shouldSilent = true
 
     if panGestureActive { return }
@@ -253,6 +257,10 @@ open class ShoutView: UIView {
       }, completion: { _ in
           if translation.y < -5 {
             self.completion?()
+            self.displayTimer?.invalidate()
+            self.announcement?.action = nil
+            self.announcement = nil
+            self.panGestureActive = false
             self.removeFromSuperview()
         }
       })
@@ -262,7 +270,7 @@ open class ShoutView: UIView {
 
   // MARK: - Handling screen orientation
 
-    @objc func orientationDidChange() {
+  @objc func orientationDidChange() {
     setupFrames()
   }
 }
