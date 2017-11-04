@@ -10,8 +10,12 @@ let whistleFactory = WhistleFactory()
 open class WhistleFactory: UIViewController {
 
   open lazy var whistleWindow: UIWindow = UIWindow()
-
+    
   open lazy var titleLabelHeight = CGFloat(20.0)
+
+  open var viewHeight: CGFloat {
+    return view.isLikeIPhoneX ? CGFloat(8.0 + view._safeAreaInsets.top) : titleLabelHeight
+  }
 
   open lazy var titleLabel: UILabel = {
     let label = UILabel()
@@ -30,8 +34,6 @@ open class WhistleFactory: UIViewController {
   open fileprivate(set) var murmur: Murmur?
   open var viewController: UIViewController?
   open var hideTimer = Timer()
-
-  private weak var previousKeyWindow: UIWindow?
 
   // MARK: - Initializers
 
@@ -85,9 +87,13 @@ open class WhistleFactory: UIViewController {
   }
 
   func moveWindowToFront() {
-    let currentStatusBarStyle = UIApplication.shared.statusBarStyle
-    whistleWindow.windowLevel = UIWindowLevelStatusBar
-    UIApplication.shared.setStatusBarStyle(currentStatusBarStyle, animated: false)
+    if self.view.isLikeIPhoneX {
+        whistleWindow.windowLevel = UIWindowLevelNormal
+    } else {
+        let currentStatusBarStyle = UIApplication.shared.statusBarStyle
+        whistleWindow.windowLevel = UIWindowLevelStatusBar
+        UIApplication.shared.setStatusBarStyle(currentStatusBarStyle, animated: false)
+    }
   }
 
   open func setupFrames() {
@@ -109,18 +115,17 @@ open class WhistleFactory: UIViewController {
       titleLabelHeight = CGFloat(neededDimensions.size.height)
       titleLabel.numberOfLines = 0 // Allows unwrapping
 
-      if titleLabelHeight < defaultHeight {
+      if titleLabelHeight < defaultHeight && !view.isLikeIPhoneX {
         titleLabelHeight = defaultHeight
       }
     } else {
       titleLabel.sizeToFit()
     }
 
-    whistleWindow.frame = CGRect(x: 0, y: view.safeYCoordinate,
-                                 width: labelWidth,
-                                 height: titleLabelHeight)
+    whistleWindow.frame = CGRect(x: 0, y: 0, width: labelWidth,
+      height: viewHeight)
     view.frame = whistleWindow.bounds
-    titleLabel.frame = view.bounds
+    titleLabel.frame = view.bounds.offsetBy(dx: 0, dy: view.isLikeIPhoneX ? titleLabelHeight: 0)
   }
 
   // MARK: - Movement methods
@@ -133,12 +138,8 @@ open class WhistleFactory: UIViewController {
   public func present() {
     hideTimer.invalidate()
 
-    if UIApplication.shared.keyWindow != whistleWindow {
-      previousKeyWindow = UIApplication.shared.keyWindow
-    }
-
     let initialOrigin = whistleWindow.frame.origin.y
-    whistleWindow.frame.origin.y = initialOrigin - titleLabelHeight
+    whistleWindow.frame.origin.y = initialOrigin - viewHeight
     whistleWindow.isHidden = false
     UIView.animate(withDuration: 0.2, animations: {
       self.whistleWindow.frame.origin.y = initialOrigin
@@ -146,14 +147,14 @@ open class WhistleFactory: UIViewController {
   }
 
   public func hide() {
-    let finalOrigin = view.frame.origin.y - titleLabelHeight
+    let finalOrigin = view.frame.origin.y - viewHeight
     UIView.animate(withDuration: 0.2, animations: {
       self.whistleWindow.frame.origin.y = finalOrigin
       }, completion: { _ in
-        if let window = self.previousKeyWindow {
+        if let window = UIApplication.shared.windows.filter({ $0 != self.whistleWindow }).first {
           window.isHidden = false
+          self.whistleWindow.isHidden = false
           self.whistleWindow.windowLevel = UIWindowLevelNormal - 1
-          self.previousKeyWindow = nil
           window.rootViewController?.setNeedsStatusBarAppearanceUpdate()
         }
     })
@@ -166,12 +167,12 @@ open class WhistleFactory: UIViewController {
 
   // MARK: - Timer methods
 
-    @objc public func timerDidFire() {
+  @objc public func timerDidFire() {
     hide()
   }
 
-    @objc func orientationDidChange() {
-    if whistleWindow.isKeyWindow {
+  @objc func orientationDidChange() {
+    if whistleWindow.isHidden {
       setupFrames()
       hide()
     }
