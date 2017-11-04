@@ -135,11 +135,11 @@ open class ShoutView: UIView {
     displayTimer = Timer.scheduledTimer(timeInterval: announcement.duration,
       target: self, selector: #selector(ShoutView.displayTimerDidFire), userInfo: nil, repeats: false)
 
-    setupFrames()
   }
 
   open func shout(to controller: UIViewController) {
     controller.view.addSubview(self)
+    setupFrames()
 
     frame.size.height = 0
     UIView.animate(withDuration: 0.35, animations: {
@@ -150,10 +150,10 @@ open class ShoutView: UIView {
   // MARK: - Setup
 
   public func setupFrames() {
-    internalHeight = (UIApplication.shared.isStatusBarHidden ? 55 : 65)
+    internalHeight = 55 + _safeAreaInsets.top
 
     let totalWidth = UIScreen.main.bounds.width
-    let offset: CGFloat = UIApplication.shared.isStatusBarHidden ? 2.5 : 5
+    let offset: CGFloat = (UIApplication.shared.isStatusBarHidden ? 2.5 : 5)
     let textOffsetX: CGFloat = imageView.image != nil ? Dimensions.textOffset : 18
     let imageSize: CGFloat = imageView.image != nil ? Dimensions.imageSize : 0
 
@@ -164,10 +164,11 @@ open class ShoutView: UIView {
 
     internalHeight += subtitleLabel.frame.height
 
-    imageView.frame = CGRect(x: Dimensions.imageOffset, y: (internalHeight - imageSize) / 2 + offset,
+    imageView.frame = CGRect(x: Dimensions.imageOffset,
+                             y: (internalHeight - imageSize) / 2 + offset,
       width: imageSize, height: imageSize)
 
-    let textOffsetY = imageView.image != nil ? imageView.frame.origin.x + 3 : textOffsetX + 5
+    let textOffsetY = _safeAreaInsets.top + 5
 
     titleLabel.frame.origin = CGPoint(x: textOffsetX, y: textOffsetY)
     subtitleLabel.frame.origin = CGPoint(x: textOffsetX, y: titleLabel.frame.maxY + 2.5)
@@ -176,7 +177,10 @@ open class ShoutView: UIView {
       titleLabel.center.y = imageView.center.y - 2.5
     }
 
-    frame = CGRect(x: 0, y: 0, width: totalWidth, height: internalHeight + Dimensions.touchOffset)
+    frame = CGRect(x: 0,
+                   y: 0,
+                   width: totalWidth,
+                   height: internalHeight + Dimensions.touchOffset)
   }
 
   // MARK: - Frame
