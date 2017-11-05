@@ -128,9 +128,22 @@ open class ShoutView: UIView {
   open func configureView(_ announcement: Announcement) {
     self.announcement = announcement
     imageView.image = announcement.image
+    backgroundView.backgroundColor = announcement.backgroundColor ?? ColorList.Shout.background
     titleLabel.text = announcement.title
+    titleLabel.textColor = announcement.titleColor ?? ColorList.Shout.title
+    titleLabel.font = announcement.titleFont ?? FontList.Shout.title
     subtitleLabel.text = announcement.subtitle
-
+    subtitleLabel.textColor = announcement.subtitleColor ?? ColorList.Shout.subtitle
+    subtitleLabel.font = announcement.subtitleFont ?? FontList.Shout.subtitle
+    indicatorView.backgroundColor = announcement.indicatorColor ?? ColorList.Shout.dragIndicator
+    imageView.contentMode = announcement.imageContentMode ?? .scaleAspectFill
+    if announcement.roundImage ?? true {
+      imageView.layer.cornerRadius = Dimensions.imageSize / 2
+      imageView.clipsToBounds = true
+    } else {
+      imageView.layer.cornerRadius = 0
+      imageView.clipsToBounds = false
+    }
     displayTimer?.invalidate()
     displayTimer = Timer.scheduledTimer(timeInterval: announcement.duration,
       target: self, selector: #selector(ShoutView.displayTimerDidFire), userInfo: nil, repeats: false)
@@ -230,7 +243,7 @@ open class ShoutView: UIView {
     announcement.action?()
     silent()
   }
-  
+
   @objc private func handlePanGestureRecognizer() {
     let translation = panGestureRecognizer.translation(in: self)
 
@@ -240,9 +253,9 @@ open class ShoutView: UIView {
       subtitleLabel.sizeToFit()
     } else if panGestureRecognizer.state == .changed {
       panGestureActive = true
-      
+
       let maxTranslation = subtitleLabel.bounds.size.height - subtitleLabelOriginalHeight
-      
+
       if translation.y >= maxTranslation {
         frame.size.height = internalHeight + maxTranslation
           + (translation.y - maxTranslation) / 25 + Dimensions.touchOffset
@@ -255,7 +268,7 @@ open class ShoutView: UIView {
 
       subtitleLabel.numberOfLines = 2
       subtitleLabel.sizeToFit()
-      
+
       UIView.animate(withDuration: 0.2, animations: {
         self.frame.size.height = height + Dimensions.touchOffset
       }, completion: { _ in

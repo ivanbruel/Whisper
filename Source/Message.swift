@@ -20,13 +20,32 @@ public struct Announcement {
   public var title: String
   public var subtitle: String?
   public var image: UIImage?
+  public var backgroundColor: UIColor?
+  public var titleColor: UIColor?
+  public var subtitleColor: UIColor?
+  public var indicatorColor: UIColor?
+  public var titleFont: UIFont?
+  public var subtitleFont: UIFont?
+  public var imageContentMode: UIViewContentMode?
+  public var roundImage: Bool?
   public var duration: TimeInterval
   public var action: (() -> Void)?
 
-  public init(title: String, subtitle: String? = nil, image: UIImage? = nil, duration: TimeInterval = 2, action: (() -> Void)? = nil) {
+  public init(title: String, subtitle: String? = nil, image: UIImage? = nil, backgroundColor: UIColor? = nil,
+              titleColor: UIColor? = nil, subtitleColor: UIColor? = nil, indicatorColor: UIColor? = nil,
+              titleFont: UIFont? = nil, subtitleFont: UIFont? = nil, imageContentMode: UIViewContentMode? = nil,
+              roundImage: Bool? = nil, duration: TimeInterval = 2, action: (() -> Void)? = nil) {
     self.title = title
     self.subtitle = subtitle
     self.image = image
+    self.backgroundColor = backgroundColor
+    self.titleColor = titleColor
+    self.subtitleColor = subtitleColor
+    self.indicatorColor = indicatorColor
+    self.titleFont = titleFont
+    self.subtitleFont = subtitleFont
+    self.imageContentMode = imageContentMode
+    self.roundImage = roundImage
     self.duration = duration
     self.action = action
   }
